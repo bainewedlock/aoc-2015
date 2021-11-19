@@ -1,0 +1,9 @@
+module Demoinput
+
+let demoinput = ".#.#.#
+...##.
+#....#
+..#...
+#.#..#
+####.."
+
