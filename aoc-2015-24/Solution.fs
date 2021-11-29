@@ -1,47 +1,38 @@
 module Solution
 
+// idea: just search for the smallest container!
+// from here: https://www.reddit.com/r/adventofcode/comments/3y1s7f/comment/cy9ufm6/?utm_source=share&utm_medium=web2x&context=3
 
-let combinations n (xs:int List) = 
-    let rec loop acc n (rest:int List) = seq [
-        if n = 0 then yield acc else
-        for i in 0..rest.Length-n do
-            let x = rest.[i]
-            let rest' = rest |> List.skip (i+1)
-            yield! loop (x::acc) (n-1) rest' ]
-    loop [] n (List.sortDescending xs)
+let rec comb n xs = 
+    match n, xs with
+    | 0, _ -> [[]]
+    | _, [] -> []
+    | k, (x::xs) -> List.map ((@) [x]) (comb (k-1) xs) @ comb k xs
 
-let rec search containerCount acc xs =
-    let xs = List.sortDescending xs
-    if containerCount = 1 then xs::acc else
-    let containerSum = (Seq.sum xs) / containerCount
-    let rec searchFor itemsPerContainer =
-        if itemsPerContainer > Seq.length xs then [] else
-        combinations itemsPerContainer xs
-        //|> Seq.takeWhile (Seq.sum >> (<=)containerSum) // pruning
-        |> Seq.filter    (Seq.sum >> (=)containerSum)
-        |> Seq.filter (fun c ->
-            let rest = List.except c xs 
-            let subSolutions = search (containerCount-1) (c::acc) rest
-            not subSolutions.IsEmpty)
-        |> Seq.toList
-        |> function
-            | [] -> searchFor (itemsPerContainer+1)
-            | xs -> xs
-    searchFor 1
+let QE = List.map uint64 >> List.reduce (*)
 
-let QE : int list -> uint64  = Seq.map uint64 >> Seq.reduce (*)
+let rec searchFirstContainer itemCount capacity items =
+    comb itemCount items
+    |> List.filter (fun xs -> List.sum xs = capacity)
+    |> function
+    | [] -> searchFirstContainer (itemCount+1) capacity items
+    | x  -> x
 
-let solve (input:string) =
-    let numbers = input.Split "\r\n" |> Array.toList |> List.map int
-    search 3 [] numbers
-    |> List.minBy (Seq.length)
-    |> QE
+let genericSolve containerCount (input:string) =
+    let weights = input.Split "\r\n" |> Array.toList |> List.map int
+    let containerWeight = List.sum weights / containerCount
+    let minContainerSize =
+        weights
+        |> List.sortDescending
+        |> List.scan (fun sum x -> x+sum) 0
+        |> List.takeWhile (fun x -> x < containerWeight)
+        |> List.length
+    searchFirstContainer minContainerSize containerWeight weights
+    |> Seq.map QE
+    |> Seq.min
     |> sprintf "%d"
 
-let solve2 (input:string) =
-    let numbers = input.Split "\r\n" |> Array.toList |> List.map int
-    search 4 [] numbers
-    //|> Seq.minBy (fun xs -> Seq.length xs, QE xs)
-    //|> QE
-    //|> sprintf "%d"
+let solve  = genericSolve 3
+let solve2 = genericSolve 4
+
 

@@ -11,7 +11,6 @@ let main argv =
 
     solve2 input
     |> printfn "solution 2: %A"
-    printfn "(accepted answer: ?)"
-    printfn "83754553 is too high"
+    printfn "(accepted answer: 74850409)"
 
     0
